@@ -1,5 +1,14 @@
 Revision history for Perl extension Time::LST.
 
+0.02  Fri Dec 08 2006
+	- critical error corrected; using gmtime rather than localtime
+		(thanks to Astro::Time author for pointing this out)
+	- conversion re-written to directly use core methods of
+		Astro::Time, rather than its own internal wrappers
+	- ymdhms_2_lst: third argument for timezone added, and now relies on
+		parsing by Date::Parse (3-character format) or DateTime (country/locale string)
+	- now_2_lst method: added
+
 0.01  Wed Nov 22 01:49:20 2006
 	- original version; created by h2xs 1.23 with options
 		-AX --skip-exporter --use-new-tests -n Time::LST

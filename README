@@ -23,6 +23,11 @@ DEPENDENCIES
 This module requires these other modules and libraries:
 
   Astro::Time
+  DateTime
+  Date::Parse
+
+Note that DateTime.pm is not presently available via ActiveState;
+it can be installed with ppm via the uwinnipeg (theoryx) repository.
 
 COPYRIGHT AND LICENCE
 
