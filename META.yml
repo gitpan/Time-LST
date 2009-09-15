@@ -1,6 +1,6 @@
 ---
 name: Time-LST
-version: 0.033
+version: 0.034
 author:
   - Roderick Garton
 abstract: onvert date/time representations to local sidereal time via Astro-Time and other Date/Time modules
