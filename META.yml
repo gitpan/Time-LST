@@ -1,0 +1,13 @@
+---
+name: Time-LST
+version: 0.031
+author:
+  - Roderick Garton
+abstract: onvert date/time representations to local sidereal time via Astro-Time and other Date/Time modules
+license: perl
+generated_by: Module::Build version 0.280801
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
+resources:
+  license: http://dev.perl.org/licenses/
