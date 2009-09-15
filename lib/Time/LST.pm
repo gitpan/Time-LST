@@ -5,144 +5,42 @@ use strict;
 use warnings;
 use Astro::Time;
 use Carp qw(croak);
-use vars qw($VERSION @EXPORT_OK);
-$VERSION = 0.02;
+use vars qw($VERSION @EXPORT @EXPORT_OK);
+$VERSION = 0.03;
 use Exporter qw(import);
-@EXPORT_OK = qw(datetime_2_lst filestat_2_lst now_2_lst time_2_lst ymdhms_2_lst);
-
-sub datetime_2_lst {
-   my ($str, $long, $tz) = @_;
-   croak __PACKAGE__, '::datetime_2_lst: Need a datetime string' if !$str;
-   require Date::Parse;
-   my @ari = Date::Parse::strptime($str);
-   croak __PACKAGE__, '::datetime_2_lst: Check datetime: the sent datetime did not parse' if ! scalar @ari;
-   pop @ari;
-   $ari[4] += 1;
-   $ari[5] += 1900 if $ari[5] < 1000;
-   return ymdhms_2_lst([reverse @ari], $long, $tz);
-}
-
-sub filestat_2_lst {
-   my ($op, $path, $long) = @_;
-   croak __PACKAGE__, '::filestat_2_lst: First argument needs to be create or mod' if $op !~ /^c|m/i;
-   croak __PACKAGE__, '::filestat_2_lst: Invalid path to file' if !$path or !-e $path;
-   return time_2_lst( (stat($path))[ $op =~ /^c/i ? 10 : 9 ] , $long);
-}
-
-sub now_2_lst {
-    return time_2_lst(time(), $_[0]);
-}
-
-sub ymdhms_2_lst {
-   my ($ymdhms, $long, $tz) = @_;
-   croak __PACKAGE__, '::ymdhms_2_lst: Need an array reference to calculate LST' if ! ref $ymdhms;
-   croak __PACKAGE__, '::ymdhms_2_lst: Need an array reference of datetime (6 values) to calculate LST' if ! ref $ymdhms eq 'ARRAY' or scalar @{$ymdhms} != 6;
-   #my $ut = hms2time($ymdhms->[3], $ymdhms->[4], $ymdhms->[5]);
-   #my $mjd = cal2mjd($ymdhms->[2], $ymdhms->[1], $ymdhms->[0], $ut);
-   #my $lst = mjd2lst($mjd, $long);
-   #return turn2str($lst, 'H', 0);
-   $ymdhms->[0] = 1970 if $ymdhms->[0] < 1970;
-   $ymdhms->[0] = 2037 if $ymdhms->[0] > 2037;
-   my $epoch;
-   $tz ||= 'local'; # Date::Parse appears to handle local more efficiently than DateTime as a default
-   if ($tz =~ /^([A-Z]{3,5}|local)$/) { # e.g., 'AEDT', 'BST'
-       require Date::Parse;
-	   my $str = join':', (@{$ymdhms}[0 .. 5]);
-       $epoch = Date::Parse::str2time($str, $tz);
-   }
-   else {
-       require DateTime;
-	   my @dkeys = (qw/year month day hour minute second/);
-	   my $i = 0;
-       my $dt = DateTime->new( 
-	   			 ( map { $dkeys[$i++] => $_ } @{$ymdhms} ),
-                 #year   => $ymdhms->[0],
-                 #month  => $ymdhms->[1],
-                 #day    => $ymdhms->[2],
-                 #hour   => $ymdhms->[3],
-                 #minute => $ymdhms->[4],
-                 #second => $ymdhms->[5],
-                 time_zone => $tz,
-       );
-       $epoch = $dt->epoch();
-     
-   }
-   croak __PACKAGE__, '::ymdhms_2_lst: Check datetime: the sent datetime did not parse' if !$epoch;
-   return time_2_lst($epoch, $long);
-}
-
-sub time_2_lst {
-   my ($time, $long) = @_;
-   croak __PACKAGE__, '::time_2_lst: Need longitude and time to calculate LST' if !$long || !$time;
-   my @time_ari = gmtime($time);
-   return _convert(
-        [
-           ($time_ari[5] + 1900), # year (ISO format)
-           ($time_ari[4] + 1),   # month
-           $time_ari[3],         # day of month
-           @time_ari[2, 1, 0]   # hours, minutes, seconds
-        ],
-        $long
-   );
-}
-
-sub _convert {
-   my ($ymdhms, $long) = @_;
-
-   # Convert hours, minutes & seconds into day fraction, via Astro-Time:
-   #my $ut_dayfraction = hms2time(_adjust_hr($ymdhms->[3], $dst), $ymdhms->[4], $ymdhms->[5]);
-   my $ut_dayfraction = hms2time($ymdhms->[3], $ymdhms->[4], $ymdhms->[5]);
-
-   # Convert angle from string (in Degrees, not Hours) into fraction of a turn, via Astro-Time:
-   my $long_turn = str2turn($long, 'D');
-
-   # Convert calendar date & time (dayfraction) into Julian Day, via Astro-Time:
-   # Usage:  cal2mjd($day, $month, $year, $ut);
-   my $mjd = cal2mjd($ymdhms->[2], $ymdhms->[1], $ymdhms->[0], $ut_dayfraction);
-
-   # Convert Julian day into fraction of a turn, and this
-   # into 'H(ours)' (not D(egrees)), & return it, via Astro-Time:
-   # Usage: 
-   #  $lst = mjd2lst($mjd, $longitude_in_turns) - e.g. (54077.4666550926, 0.409258333333333)
-   #  turn2str($lst, 'H|D', 'No. sig. digits');
-   return turn2str(mjd2lst($mjd, $long_turn), 'H', 0);
-}
-
-1;
-__END__
+@EXPORT = qw(ymdhms2lst datetime2lst filestat2lst now2lst time2lst);
+@EXPORT_OK = qw(ymdhms_2_lst datetime_2_lst filestat_2_lst now_2_lst time_2_lst);
 
 =head1 NAME
 
-Time::LST - Convert datetime representations to local sidereal time via Astro-Time
+Time::LST - Convert date/time representations to local sidereal time via Astro-Time and other Date/Time modules
 
 =head1 VERSION
 
-This is documentation for Version 0.02 of Time::LST (2006.12.08).
+This is documentation for Version 0.03 of Time::LST (2006.12.30).
 
 =head1 SYNOPSIS
 
-  use Time::LST qw(filestat_2_lst now_2_lst time_2_lst ymdhms_2_lst);
+  use Time::LST qw(datetime2lst filestat2lst now2lst time2lst ymdhms2lst);
   
-  $path = 'valid_path_to_a_file';
   $long = -3.21145; # London, in degrees
   
-  $lst = filestat_2_lst('mod', $path, $long); # or filestat_2_lst('create', $path, $long)
-  $lst = time_2_lst(time(), $long); # "now" in LST
-  $lst = ymdhms_2_lst([2006, 11, 21, 12, 15, 0], $long, 'eadt'); # optional timezone
-
-  print $lst;
+  $lst_from_string = datetime2lst('1942:8:7T17:00:00', -3.21145, 'BST'); # note approx only for pre-1970
+  $data_mod_lst    = filestat2lst('mod', 'valid_path_to_a_file', $long); # or filestat2lst('create', $path, $long)
+  $now_as_lst      = time2lst(time(), $long);
+  $lst_from_aref   = ymdhms2lst([2006, 11, 21, 12, 15, 0], $long, 'EADT'); # optional timezone
 
 =head1 DESCRIPTION
 
-A wrapper to a number of Astro::Time methods that simplifies conversion of a datetime array (such as returned by L<Date::Calc|lib::Date::Calc>), or time in seconds since the epoch (as returned by L<time|perlfunc/time>, or L<stat|perlfunc/stat> fields), into local sidereal time (in hours, minutes and seconds). 
+This is essentially no more than a wrapper to a number of L<Astro::Time|Astro::Time> methods that simplifies conversion into local sidereal time of a datetime representation, such as returned by L<Date::Calc|lib::Date::Calc>), or seconds since the epoch, such as returned by L<time|perlfunc/time>, or L<stat|perlfunc/stat> fields). 
+
+Manditorily, you need to know the longitude (in degrees) of the space relevant to your time.
 
 Give a filepath to get the LST of its last modified time, or readily see what the LST is now. 
 
-Essentially, you need to know the longitude (in degrees) of the space relevant to your time.
+Get an accurate representation of the relevant datetime ("now," a given time, or a file's creation or modified time) in so many "seconds since the epoch", taking TimeZone into account.
 
 Optionally, a timezone string in some methods can be helpful for accurately parsing (solar) clock-and-calendar times.
-
-My original intention was to be able to get LST for clock-times occurring in the UK during World War 2, when double daylight saving time (+2 hours from GMT) was occasionally in force. This was outside of normal timezone-conversion solutions. This is now simply possible via the ymdhms_2_lst() method.
 
 =head1 METHODS
 
@@ -152,19 +50,40 @@ All methods expect a longitude, either in I<degrees.decimal> or I<degrees:minute
 
 LST is always returned in the format B<H:M:S>, hours ranging from 0 (12 AM) to 23 (11 PM).
 
-=head2 datetime_2_lst
+=head2 datetime2lst
 
- $lst = datetime_2_lst('1942:12:27:16:04:07', -3.21145, 'BST')
+ $lst = datetime2lst('1942:12:27:16:04:07', -3.21145, 'BST')
 
-Returns LST on the basis of parsing a datetime string into "seconds since the epoch". This string can be in any form parseable by L<Date::Parse|lib::Date::Parse>. Note that there are system limitations in handling years outside of a certain range. Years less than 1000 will not parse. Years between 1000 and 1969, inclusive, will be rendered as 1970, and those greater than 2037 will be rendered as 2037. (LST annually deviates by only about 3 minutes from 1970 to 2037).
+Returns LST on the basis of parsing a datetime string into "seconds since the epoch". 
 
-Longitude in degrees is mandatory. 
+The first two values to the function are manditory.
 
-A timezone string can be specified as an optional third argument for accurate parsing of the datetime string into "seconds since the epoch"; the local timezone is used if this is not specified. Valid representations include the likes of "AEDT" and "EST" (parsed by Date::Parse; i.e., a capital-letter string of 3-5 letters in length), or "Australia/Hobart" (parsed by DateTime).
+Firstly, there should be passed a string in any form parseable by L<Date::Parse|lib::Date::Parse>, e.g., "1995:01:24T09:08:17.1823213"; "21 dec 17:05"; "16 Nov 94 22:28:20 PST". There are system limitations in handling years outside of a certain range. Years less than 1000 will not parse. Years between 1000 and 1969, inclusive, will be rendered as 1970, and those greater than 2037 will be rendered as 2037. (LST deviates by only about 3 minutes from 1970 to 2037).
 
-=head2 filestat_2_lst
+A second mandatory value to the function is the I<longitude> in degrees.
 
- $lst = filestat_2_lst('create|mod', $path, $long)
+Then follow non-mandatory values.
+
+A timezone string can be specified as an optional third value for accurate parsing of the datetime string into "seconds since the epoch"; the local timezone is used if this is not specified. Valid representations of Timezone include the likes of "AEDT" and "EST" (parsed by L<Date::Parse|Date::Parse>; i.e., a capital-letter string of 3-5 letters in length), or "Australia/Hobart" (parsed by L<DateTime|DateTime>).
+
+=cut
+
+sub datetime2lst {
+   my ($str, $long, $tz) = @_;
+   croak __PACKAGE__, '::datetime2lst: Need a datetime string' if !$str;
+   require Date::Parse;
+   my @ari = Date::Parse::strptime($str);
+   croak __PACKAGE__, '::datetime2lst: Check datetime: the sent datetime did not parse' if ! scalar @ari;
+   pop @ari;
+   $ari[4] += 1;
+   $ari[5] += 1900 if $ari[5] < 1000;
+   return ymdhms2lst([reverse @ari], $long, $tz);
+}
+*datetime_2_lst = \&datetime2lst; # Alias
+
+=head2 filestat2lst
+
+ $lst = filestat2lst('create|mod', $path, $long)
 
 Returns LST corresponding to the creation or modification time of a given path. 
 
@@ -172,33 +91,166 @@ First argument equals either 'c' or 'm' (only the first letter is looked-up, cas
 
 The path must be to a "real" file, not a link to a file.
 
-=head2 now_2_lst
+=cut
 
- $lst = now_2_lst($long)
+sub filestat2lst {
+   my ($op, $path, $long, $tz) = @_;
+   croak __PACKAGE__, '::filestat_2_lst: First argument needs to be create or mod' if $op !~ /^c|m/i;
+   croak __PACKAGE__, '::filestat_2_lst: Invalid path to file' if !$path or !-e $path;
+   return time2lst( (stat($path))[ $op =~ /^c/i ? 10 : 9 ] , $long, $tz);
+}
+*filestat_2_lst = \&filestat2lst; # Alias
+
+#--------------------------------
+=head2 now2lst
+#--------------------------------
+
+ $lst = now2lst($long)
 
 Returns local now (as returned by perl's time()) as LST, given longitude in degrees.
 
-Same as going: C<time_2_lst(time(), $long)>.
+Same as going: C<time2lst(time(), $long)>.
 
-=head2 time_2_lst
+=cut
 
- $lst = time_2_lst('1164074032', $long)
+sub now2lst {
+    return time2lst(time(), @_);
+}
+*now_2_lst = \&now2lst;
 
-Returns LST given seconds since the epoch. If you have a time in localtime format, see L<Time::localtime|Time::localtime> to convert it into the format that can be used with this function.
+#--------------------------------
+=head2 ymdhms2lst
+#--------------------------------
 
-=head2 ymdhms_2_lst
+ $lst = ymdhms2lst([2006, 8, 21, 12, 3, 0], $long, $timezone)
 
- $lst = ymdhms_2_lst([2006, 8, 21, 12, 3, 0], $long, $timezone)
+Returns LST corresponding to a datetime array reference of the following elements:
 
-Returns LST corresponding to a datetime given as an array reference of the following elements:
+=for html <p>&nbsp;&nbsp;[<br>&nbsp;&nbsp;&nbsp;year (4-digit <i>only</i>),<br>&nbsp;&nbsp;&nbsp;month-of-year (i.e., <i>n</i>th month (ranging 1-12, or 01-12), not month index as returned by localtime()),<br>&nbsp;&nbsp;&nbsp;day-of-month (1-31 (or 01-31)),<br>&nbsp;&nbsp;&nbsp;hour (0 - 23),<br>&nbsp;&nbsp;&nbsp;minutes,<br>&nbsp;&nbsp;&nbsp;seconds<br>&nbsp;&nbsp;]</p>
 
-=for html <p>&nbsp;&nbsp;[<br>&nbsp;&nbsp;&nbsp;year (4-digit <i>only</i>),<br>&nbsp;&nbsp;&nbsp;month-of-year (i.e., <i>n</i>th month (ranging 1-12), not month index as returned by localtime()),<br>&nbsp;&nbsp;&nbsp;day-of-month (1-31, no pseudo-octals such as "08"),<br>&nbsp;&nbsp;&nbsp;hour (0 - 23),<br>&nbsp;&nbsp;&nbsp;minutes,<br>&nbsp;&nbsp;&nbsp;seconds<br>&nbsp;&nbsp;]</p>
-
-Range-checking of these values is performed by Astro::Time itself. Ensure that the year is 4-digit representation, and do not send the likes of "08" for 8.
+Range-checking of these values is performed by Astro::Time itself; digital representations such as "08" or "00" are stripped of leading zeroes for parseability to another module (so there's no need to add them as fillers). Ensure that the year is 4-digit representation.
 
 A value for longitude is required secondary to this datetime array.
 
 A final timezone string - e.g., 'EST', 'AEDT' - is optional. Sending nothing, or an erroneous timezone string, assumes present local timezone. The format is as used by L<Date::Parse|Date::Parse> or L<DateTime|DateTime>; UTC+I<n> format does not parse.
+
+=cut
+
+sub ymdhms2lst {
+   my ($ymdhms, $long, $tz) = @_;
+   croak __PACKAGE__, '::ymdhms2lst: Need an array reference to calculate LST' if ! ref $ymdhms;
+   croak __PACKAGE__, '::ymdhms2lst: Need an array reference of datetime (6 values) to calculate LST' if ! ref $ymdhms eq 'ARRAY' or scalar @{$ymdhms} != 6;
+
+  # Ensure the year is epoch-able:
+   if ($ymdhms->[0] < 1970) {
+        $ymdhms->[0] = 1970;
+        if($ymdhms->[1] == 2 && $ymdhms->[2] == 29) {
+            $ymdhms->[2] = 28;
+        }
+   }
+   
+   if ($ymdhms->[0] > 2037) {
+        $ymdhms->[0] = 2037; 
+        if($ymdhms->[1] == 2 && $ymdhms->[2] == 29) {
+            $ymdhms->[2] = 28;
+        }
+   }
+
+   # Some module doesn't like "pseudo-octals" like 08, or 00, but another will need at least a 0; SO:
+   my $i;
+   for ($i = 0; $i < 6; $i++) {
+       $ymdhms->[$i] =~ s/^0+//;
+       $ymdhms->[$i] ||= 0;
+   }
+
+   my $epoch = _ymdhms2epochsecs($ymdhms, $tz);
+   croak __PACKAGE__, '::ymdhms2lst: Check datetime: the sent datetime did not parse' if  ! defined $epoch;
+   return time2lst($epoch, $long, $tz); # knock off time, just do the LST conversion
+#
+}
+*ymdhms_2_lst = \&ymdhms2lst;
+
+#--------------------------------
+=head2 time2lst
+#--------------------------------
+
+ $lst = time2lst('1164074032', $long)
+
+Returns LST given seconds since the epoch. If you have a time in localtime format, see L<Time::localtime|Time::localtime> to convert it into the format that can be used with this function.
+
+=cut
+
+sub time2lst {
+   my ($time, $long, $tz) = @_;
+   croak __PACKAGE__, '::time2lst: Need longitude and time to calculate LST' if !$long || !$time;
+   my @time_ari = gmtime($time);
+   return _convert(
+        [
+           ($time_ari[5] + 1900), # year (ISO format)
+           ($time_ari[4] + 1),   # month
+           $time_ari[3],        # day of month
+           @time_ari[2, 1, 0]  # hours, minutes, seconds
+        ],
+        $long
+   );
+}
+*time_2_lst = \&time2lst; # Alias
+
+
+sub _ymdhms2epochsecs {
+   my ($ymdhms, $tz) = @_;
+   
+   # Get the epoch seconds of this datetime thing:
+   my $epoch;
+   #$tz ||= 'local'; # Date::Parse handles localtime more reliably than does DateTime
+   if ($tz =~ /^([A-Z]{3,5}|local)$/) { # e.g., 'AEDT', 'BST', 'local'
+       require Date::Parse;
+	   my $str = join':', (@{$ymdhms}[0 .. 5]); # all 6 els as a string
+       $epoch = Date::Parse::str2time($str, $tz);
+   }
+   elsif ($tz =~ /^[A-Z]/) {
+       require DateTime;
+	   my @dkeys = (qw/year month day hour minute second/);
+	   my $i = 0;
+       my $dt = DateTime->new( ( map { $dkeys[$i++] => $_ } @{$ymdhms} ), time_zone => $tz, );
+       $epoch = $dt->epoch();
+  }
+  else { # No timezone specification; use Time::Local
+    require Time::Local;
+    #$time = timelocal($sec,$min,$hour,$mday,$mon,$year);
+    $epoch = Time::Local::timelocal(reverse @{$ymdhms});
+  }
+  return $epoch;
+}
+
+#===============================================
+sub _convert {
+#===============================================
+   my $ymdhms = shift;
+   return turn2str(   # Convert Julian day into fraction of a turn
+            mjd2lst(
+                cal2mjd( # Convert calendar date & time (dayfraction) into Julian Day, via Astro-Time:
+                    $ymdhms->[2], # $day
+                    $ymdhms->[1], # $month
+                    $ymdhms->[0], # $year
+                    hms2time(# Convert hours, minutes & seconds into day fraction (ut), via Astro-Time:
+                        $ymdhms->[3],
+                        $ymdhms->[4],
+                        $ymdhms->[5],,
+                    ),
+                ), 
+                str2turn(# Convert angle from string (in Degrees, not Hours) into fraction of a turn, via Astro-Time:
+                    shift,
+                    'D',
+                )
+            ),
+       'H', # into 'H(ours)' (not D(egrees))
+       0 # 'No. sig. digits'
+   );
+}
+
+1;
+__END__
 
 =head1 EXAMPLE
 
@@ -206,7 +258,7 @@ A final timezone string - e.g., 'EST', 'AEDT' - is optional. Sending nothing, or
 
 Use HeavensAbove and Date::Calc to blindly get the present LST.
 
- use Time::LST qw(ymdhms_2_lst);
+ use Time::LST qw(ymdhms2lst);
  use Date::Calc qw(Today_and_Now);
  use WWW::Gazetteer::HeavensAbove;
 
@@ -214,32 +266,42 @@ Use HeavensAbove and Date::Calc to blindly get the present LST.
  my $cities = $atlas->find('Hobart', 'AU'); # cityname, ISO country code
  # Assume call went well, and the first city returned is "here".
 
- print 'The LST here and now is ' . ymdhms_2_lst([Today_and_Now()], $cities->[0]->{'longitude'});
+ print 'The LST here and now is ' . ymdhms2lst([Today_and_Now()], $cities->[0]->{'longitude'});
 
 =head1 SEE ALSO
 
 L<Astro::Time|lib::Astro::Time> : the present module uses the C<turn2str>, C<hms2time>, C<str2turn>, C<cal2mjd>, and C<mjd2lst> methods to eventually get the LST for a given time.
 
-L<Date::Parse|lib::Date::Parse> : the present module uses the C<str2time> method to parse datetime strings to a format that can be readily converted to LST via C<ymdhms_2_time()>. See this module for parsing other datetime representations into a "time" format that can be sent to C<time_2_lst()>.
+L<Date::Parse|lib::Date::Parse> : the present module uses the C<str2time> method to parse datetime strings to a format that can be readily converted to LST via C<ymdhms_2_time()>. See this module for parsing other datetime representations into a "time" format that can be sent to C<time2lst()>.
 
 L<WWW::Gazetteer::HeavensAbove|lib::WWW::Gazetteer::HeavensAbove> : see this module for determining longitudes of a certain city, or visit L<http://www.heavens-above.com/countries.asp>.
 
 L<http://home.tiscali.nl/~t876506/TZworld.html> for valid timezone strings.
 
-=head1 AUTHOR
+=head1 TO DO/ISSUES
 
-Roderick Garton, E<lt>rgarton@utas_DOT_edu_DOT_auE<gt>
+Timezone handling might need higher sensitivity.
+
+Epoch-external periods merit a better solution than reduction to the minimum/maximum.
 
 =head1 ACKNOWLEDGEMENT
 
-The author of Astro::Time kindly looked over the basic conversion wrap-up. Any errors remain those of the present author.
+The author of Astro::Time kindly looked over the basic conversion wrap-up. Any errors are fully those of the present author.
 
-=head1 COPYRIGHT/LICENSE/DISCLAIMER
+=head1 AUTHOR/LICENSE
 
-Copyright (C) 2006 Roderick Garton 
+=over 4
 
-This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself, either Perl version 5.8.8 or, at your option, any later version of Perl 5 you may have available. 
+=item Copyright (c) 2006-2008 R Garton
+
+rgarton AT cpan DOT org
+
+This program is free software. It may be used, redistributed and/or modified under the same terms as Perl-5.6.1 (or later) (see L<http://www.perl.com/perl/misc/Artistic.html>).
+
+=item Disclaimer
 
 To the maximum extent permitted by applicable law, the author of this module disclaims all warranties, either express or implied, including but not limited to implied warranties of merchantability and fitness for a particular purpose, with regard to the software and the accompanying documentation.
+
+=back
 
 =cut

@@ -26,7 +26,7 @@ This module requires these other modules and libraries:
   DateTime
   Date::Parse
 
-Note that DateTime.pm is not presently available via ActiveState;
+ppm users: If you don't have DateTime, and DateTime.pm isn't available via ActiveState repository,
 it can be installed with ppm via the uwinnipeg (theoryx) repository.
 
 COPYRIGHT AND LICENCE
