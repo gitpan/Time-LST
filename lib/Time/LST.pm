@@ -17,7 +17,7 @@ Time::LST - Convert date/time representations to local sidereal time via Astro-T
 
 =head1 VERSION
 
-This is documentation for Version 0.032 of Time::LST (2006.12.30).
+This is documentation for Version 0.033 of Time::LST (2006.12.30).
 
 =head1 SYNOPSIS
 
