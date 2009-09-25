@@ -6,7 +6,7 @@ use warnings;
 use Astro::Time;
 use Carp qw(croak);
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = 0.03;
+$VERSION = 0.037;
 use Exporter qw(import);
 @EXPORT = qw(ymdhms2lst datetime2lst filestat2lst now2lst time2lst);
 @EXPORT_OK = qw(ymdhms_2_lst datetime_2_lst filestat_2_lst now_2_lst time_2_lst);
@@ -17,7 +17,7 @@ Time::LST - Convert date/time representations to local sidereal time via Astro-T
 
 =head1 VERSION
 
-This is documentation for Version 0.036 of Time::LST (2006.12.30).
+This is documentation for Version 0.037 of Time::LST (2009.09.25).
 
 =head1 SYNOPSIS
 
