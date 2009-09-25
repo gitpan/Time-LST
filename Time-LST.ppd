@@ -1,8 +1,0 @@
-<SOFTPKG NAME="Time-LST" VERSION="0,03,5,0">
-    <TITLE>Time-LST</TITLE>
-    <ABSTRACT>Convert date/time representations to local sidereal time via Astro-Time and other Date/Time modules</ABSTRACT>
-    <AUTHOR>Roderick Garton</AUTHOR>
-    <IMPLEMENTATION>
-        <CODEBASE HREF="PPM-Time-LST-0.035.tar.gz" />
-    </IMPLEMENTATION>
-</SOFTPKG>

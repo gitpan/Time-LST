@@ -4,3 +4,4 @@ MANIFEST
 README
 t/Time-LST.t
 lib/Time/LST.pm
+META.yml                                 Module meta-data (added by MakeMaker)
