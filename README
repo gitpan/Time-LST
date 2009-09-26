@@ -1,4 +1,4 @@
-Time-LST version 0.01
+Time-LST version 0.038
 =====================
 
 A wrapper to a number of Astro::Time methods that simplifies
@@ -31,7 +31,7 @@ it can be installed with ppm via the uwinnipeg (theoryx) repository.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2006 by R Garton
+Copyright (C) 2006-2009 by R Garton
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

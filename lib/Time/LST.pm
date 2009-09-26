@@ -6,7 +6,7 @@ use warnings;
 use Astro::Time;
 use Carp qw(croak);
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = 0.037;
+$VERSION = 0.038;
 use Exporter qw(import);
 @EXPORT = qw(ymdhms2lst datetime2lst filestat2lst now2lst time2lst);
 @EXPORT_OK = qw(ymdhms_2_lst datetime_2_lst filestat_2_lst now_2_lst time_2_lst);
@@ -17,7 +17,7 @@ Time::LST - Convert date/time representations to local sidereal time via Astro-T
 
 =head1 VERSION
 
-This is documentation for Version 0.037 of Time::LST (2009.09.25).
+This is documentation for Version 0.038 of Time::LST (2009.09.26).
 
 =head1 SYNOPSIS
 
@@ -101,9 +101,7 @@ sub filestat2lst {
 }
 *filestat_2_lst = \&filestat2lst; # Alias
 
-#--------------------------------
 =head2 now2lst
-#--------------------------------
 
  $lst = now2lst($long)
 
@@ -118,9 +116,7 @@ sub now2lst {
 }
 *now_2_lst = \&now2lst;
 
-#--------------------------------
 =head2 ymdhms2lst
-#--------------------------------
 
  $lst = ymdhms2lst([2006, 8, 21, 12, 3, 0], $long, $timezone)
 
@@ -170,9 +166,7 @@ sub ymdhms2lst {
 }
 *ymdhms_2_lst = \&ymdhms2lst;
 
-#--------------------------------
 =head2 time2lst
-#--------------------------------
 
  $lst = time2lst('1164074032', $long)
 
@@ -223,9 +217,7 @@ sub _ymdhms2epochsecs {
   return $epoch;
 }
 
-#===============================================
 sub _convert {
-#===============================================
    my $ymdhms = shift;
    return turn2str(   # Convert Julian day into fraction of a turn
             mjd2lst(

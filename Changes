@@ -3,7 +3,7 @@ Revision history for Perl extension Time::LST.
 #--------------------------------------------
 
 #---
-0.037 Sept 2009 : continuing effort to make cross-platform friendly dist
+0.038 Sept 2009 : continuing effort to make cross-platform friendly dist; cleanup pod
 
 0.03  Sat Dec 30 2006
 	- now able to make use of "08" for a month or day, which some module 
